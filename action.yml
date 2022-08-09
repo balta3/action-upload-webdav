@@ -17,6 +17,10 @@ inputs:
   files:
     description: Newline-delimited list of path globs for asset files to upload
     required: true
+  files_base:
+    description: Base path of the files to allow uploading a directory structure
+    default: ""
+    required: false
   fail_on_unmatched_files:
     description: Fail the action when exist unmatch file
     default: "false"

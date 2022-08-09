@@ -1,3 +1,4 @@
+import * as glob from '@actions/glob'
 import * as path from 'path'
 import {filePaths, parseConfig, unmatchedPatterns} from './util'
 import {info, notice, setFailed} from '@actions/core'
@@ -25,17 +26,28 @@ async function run(): Promise<void> {
         password: config.webdavPassword
     })
 
+    const filesBase = config.filesBase ? (await glob.create(config.filesBase).then(g => g.glob()))[0] : ''
+
     // first be sure there are have directory
     if ((await client.exists(config.webdavUploadPath)) === false) {
         await client.createDirectory(config.webdavUploadPath, {recursive: true})
     }
     for (const file of files) {
-        const uploadPath = path.join(
-            config.webdavUploadPath,
-            path.basename(file)
-        )
+        const uploadPath = filesBase
+            ? path.join(
+                config.webdavUploadPath,
+                path.relative(filesBase, file)
+            )
+            : path.join(
+                config.webdavUploadPath,
+                path.basename(file)
+            )
         try {
             info(`📦 Uploading ${file} to ${uploadPath}`)
+            const dirName = path.dirname(uploadPath)
+            if ((await client.exists(dirName)) === false) {
+                await client.createDirectory(dirName, {recursive: true})
+            }
             createReadStream(file).pipe(client.createWriteStream(uploadPath))
             notice(`🎉 Uploaded ${uploadPath}`)
         } catch (error) {

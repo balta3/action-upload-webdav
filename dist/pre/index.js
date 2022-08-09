@@ -92,6 +92,7 @@ const parseConfig = () => {
                 required: true,
                 trimWhitespace: true
             }),
+            filesBase: core.getInput('files_base'),
             failOnUnmatchedFiles: core.getBooleanInput('fail_on_unmatched_files')
         };
     }

@@ -8,6 +8,7 @@ export interface Config {
     webdavPassword: string
     webdavUploadPath: string
     files: string[]
+    filesBase: string
     failOnUnmatchedFiles: boolean
 }
 
@@ -24,6 +25,7 @@ export const parseConfig = (): Config => {
                 required: true,
                 trimWhitespace: true
             }),
+            filesBase: core.getInput('files_base'),
             failOnUnmatchedFiles: core.getBooleanInput(
                 'fail_on_unmatched_files'
             )

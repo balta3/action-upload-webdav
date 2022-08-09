@@ -35,6 +35,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const glob = __importStar(__nccwpck_require__(8090));
 const path = __importStar(__nccwpck_require__(1017));
 const util_1 = __nccwpck_require__(4024);
 const core_1 = __nccwpck_require__(2186);
@@ -58,14 +59,21 @@ function run() {
             username: config.webdavUsername,
             password: config.webdavPassword
         });
+        const filesBase = config.filesBase ? (yield glob.create(config.filesBase).then(g => g.glob()))[0] : '';
         // first be sure there are have directory
         if ((yield client.exists(config.webdavUploadPath)) === false) {
             yield client.createDirectory(config.webdavUploadPath, { recursive: true });
         }
         for (const file of files) {
-            const uploadPath = path.join(config.webdavUploadPath, path.basename(file));
+            const uploadPath = filesBase
+                ? path.join(config.webdavUploadPath, path.relative(filesBase, file))
+                : path.join(config.webdavUploadPath, path.basename(file));
             try {
                 (0, core_1.info)(`📦 Uploading ${file} to ${uploadPath}`);
+                const dirName = path.dirname(uploadPath);
+                if ((yield client.exists(dirName)) === false) {
+                    yield client.createDirectory(dirName, { recursive: true });
+                }
                 (0, fs_1.createReadStream)(file).pipe(client.createWriteStream(uploadPath));
                 (0, core_1.notice)(`🎉 Uploaded ${uploadPath}`);
             }
@@ -132,6 +140,7 @@ const parseConfig = () => {
                 required: true,
                 trimWhitespace: true
             }),
+            filesBase: core.getInput('files_base'),
             failOnUnmatchedFiles: core.getBooleanInput('fail_on_unmatched_files')
         };
     }
